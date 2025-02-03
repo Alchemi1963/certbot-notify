@@ -2,7 +2,7 @@ import socket
 import ssl as tls
 from cryptography import x509
 from urllib.parse import urlparse
-from datetime import datetime
+from datetime import datetime, timedelta
 
 default_ports = {
     "http": 80,
@@ -31,20 +31,20 @@ default_ports = {
 }
 
 class Certificate:
-    def __init__(self, loc, check_interval, max_age, mode):
+    def __init__(self, location, check_interval, max_age, mode):
 
         self.check_interval = check_interval
         self.mode = mode
         self.max_age = max_age
         if self.mode == 'files':
-            self.location = loc
+            self.location = location
             self.get_cert_files()
 
         elif self.mode == 'host':
             self.ctx = tls.create_default_context()
             self.ctx.check_hostname = False
             self.ctx.verify_mode = tls.CERT_NONE
-            self.location = self.parse_uri(loc)
+            self.location = self.parse_uri(location)
             self.get_cert_host()
 
         self.load_cert_data()
@@ -83,10 +83,20 @@ class Certificate:
 
     ##
     # Validate certificate
-    # Returns False if certificate is invalid, time difference if valid
+    # Returns False if certificate is invalid, timedelta until expiry if valid
     ##
     def validate(self):
         now = datetime.now()
         if now < self.data.not_valid_before or now > self.data.not_valid_after:
             return False
         return self.data.not_valid_after - now
+
+    ##
+    # Should the program warn the admins?
+    # Returns True or False
+    ##
+    def should_warn(self):
+        valid = self.validate()
+        if not valid:
+            return True
+        return valid.total_seconds() >= (self.max_age * 86400) # max_age * 86400 seconds per day

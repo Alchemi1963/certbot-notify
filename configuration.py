@@ -10,7 +10,7 @@ SECTIONS = {
 } # section: [list of options]
 DEFAULTS = {
     'mode': 'host',
-    'locations': '',
+    'locations': [],
     'check-interval': 24,
     'max-age': 32,
     'cert-file': 'cert.pem'
@@ -39,7 +39,7 @@ COMMENTS = {
 # Default: 32
 """,
     'cert-file': """
-# Comma separated list of filename(s) to check. e.g. cert.pem, fullchain.pem.
+# Certificate file to check. e.g. cert.pem, fullchain.pem.
 # This option only applies if files mode is chosen.
 # Note: other certificate files might cause inaccuracies.
 # Default: cert.pem
@@ -101,7 +101,7 @@ def get_option(config, section, option, fallback = None):
     return value
 
 ##
-# Main config reader, only searches for the default section(s).
+# Config reader
 # Returns config values in a dict
 ##
 def read_config():
@@ -124,28 +124,14 @@ def read_config():
         for opt in opts:
             config_values[opt] = get_option(config, sec, opt, DEFAULTS[opt])
 
-    return config_values
-
-##
-# Extra config reader, only searches for the custom section(s).
-# Returns extra config values in a dict
-##
-def read_config_extra(config_values):
-    if not path_exists(CONFIG_FILE) or not path_isfile(CONFIG_FILE):
-        create_config()
-
-    config = configparser.ConfigParser()
-
-    config.read(CONFIG_FILE)
-
-    config_values_extra = {}
-
-    if len(config.sections()) > 1:
+    # Get the extra custom values
+    if len(config.sections()) > len(SECTIONS):
         for sec in config.sections():
             if sec in SECTIONS.keys():
                 continue
             section = {}
             for opt in DEFAULTS.keys():
                 section[opt] = get_option(config, sec, opt, config_values[opt])
-            config_values_extra[sec] = section
-    return config_values_extra
+            config_values[sec] = section
+
+    return config_values
