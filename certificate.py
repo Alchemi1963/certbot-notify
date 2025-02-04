@@ -1,8 +1,11 @@
+import logging
 import socket
 import ssl as tls
 from cryptography import x509
 from urllib.parse import urlparse
 from datetime import datetime, timedelta
+
+import configuration
 
 default_ports = {
     "http": 80,
@@ -30,12 +33,14 @@ default_ports = {
     "smb": 445
 }
 
-class Certificate:
-    def __init__(self, location, check_interval, max_age, mode):
 
-        self.check_interval = check_interval
-        self.mode = mode
-        self.max_age = max_age
+class Certificate:
+    def __init__(self, location: str, config: configuration.Configuration, logger: logging.Logger,
+                 config_location: str = None):
+        self.logger = logger
+        self.check_interval = config.get('check-interval', config_location)
+        self.mode = config.get('mode', config_location)
+        self.max_age = config.get('max-age', config_location)
         if self.mode == 'files':
             self.location = location
             self.get_cert_files()
@@ -76,7 +81,7 @@ class Certificate:
     # Assumes https if no scheme is specified.
     ###
     def parse_uri(self, url):
-        if "://" not in url: # if no scheme is present, assume https
+        if "://" not in url:  # if no scheme is present, assume https
             url = "https://" + url
             uri = urlparse(url)
         return uri.hostname, uri.port if uri.port is not None else default_ports[uri.scheme]
@@ -99,4 +104,4 @@ class Certificate:
         valid = self.validate()
         if not valid:
             return True
-        return valid.total_seconds() >= (self.max_age * 86400) # max_age * 86400 seconds per day
+        return valid.total_seconds() >= (self.max_age * 86400)  # max_age * 86400 seconds per day
