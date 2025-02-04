@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from configuration import Configuration
 from certificate import Certificate
@@ -12,10 +13,14 @@ def process_location(location: str, config: Configuration, logger: logging.Logge
     certificates.append(cert)
 
 
-if __name__ == "__main__":
+def main():
     logger = logging.getLogger("certbot-notify")
     config = Configuration('./test/certbot-notify.conf', logger)
     config.read_config()
+
+    if config.get('locations') is None or len(config.get('locations')) == 0:
+        logger.error('No locations configured')
+        sys.exit(1)
 
     for location in config.get('locations'):
 
@@ -26,3 +31,6 @@ if __name__ == "__main__":
         else:
             process_location(location, config, logger)
 
+
+if __name__ == "__main__":
+    main()
