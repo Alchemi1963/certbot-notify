@@ -14,9 +14,9 @@ class Configuration:
 
     DEFAULTS = {
         'mode': 'host',
-        'locations': [],
-        'check-interval': 24,
-        'max-age': 32,
+        'locations': '',
+        'check-interval': '24',
+        'max-age': '32',
         'cert-file': 'cert.pem'
     }  # option: default value
 
@@ -95,17 +95,17 @@ class Configuration:
     ##
     def __get_option(self, section, option, fallback=None):
         try:
-            value = self.config.get(section, option, fallback=None)
-            if ',' in value:
-                value = value.split(',')
-        except TypeError:
+            value = self.config.getint(section, option, fallback=None)
+        except ValueError:
             try:
-                value = self.config.getint(section, option, fallback=None)
-            except TypeError:
+                value = self.config.getfloat(section, option, fallback=None)
+            except ValueError:
                 try:
-                    value = self.config.getfloat(section, option, fallback=None)
-                except TypeError:
                     value = self.config.getboolean(section, option, fallback=None)
+                except ValueError:
+                    value = self.config.get(section, option, fallback=None)
+                    if ',' in value:
+                        value = value.split(',')
 
         if value is None:
             self.logger.info(f"Value for {option} in {section} not found, falling back to {fallback}.")

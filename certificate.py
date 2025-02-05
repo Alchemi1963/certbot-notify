@@ -3,7 +3,7 @@ import socket
 import ssl as tls
 from cryptography import x509
 from urllib.parse import urlparse
-from datetime import datetime, timedelta
+from datetime import datetime, UTC
 
 import configuration
 
@@ -41,6 +41,8 @@ class Certificate:
         self.check_interval = config.get('check-interval', config_location)
         self.mode = config.get('mode', config_location)
         self.max_age = config.get('max-age', config_location)
+        self.logger.debug(location)
+
         if self.mode == 'files':
             self.location = location
             self.get_cert_files()
@@ -49,7 +51,8 @@ class Certificate:
             self.ctx = tls.create_default_context()
             self.ctx.check_hostname = False
             self.ctx.verify_mode = tls.CERT_NONE
-            self.location = self.parse_uri(location)
+            self.location = location
+            self.host, self.port = self.parse_uri(location)
             self.get_cert_host()
 
         self.load_cert_data()
@@ -72,8 +75,8 @@ class Certificate:
     # Returns (TLS_version, PEM certificate)
     ###
     def get_cert_host(self):
-        with socket.create_connection(self.host) as sock:
-            with self.ctx.wrap_socket(sock, server_hostname=self.host[0]) as ctx_sock:
+        with socket.create_connection((self.host, self.port)) as sock:
+            with self.ctx.wrap_socket(sock, server_hostname=self.host) as ctx_sock:
                 self.cert = tls.DER_cert_to_PEM_cert(ctx_sock.getpeercert(True))
 
     ###
@@ -83,25 +86,33 @@ class Certificate:
     def parse_uri(self, url):
         if "://" not in url:  # if no scheme is present, assume https
             url = "https://" + url
-            uri = urlparse(url)
+
+        uri = urlparse(url)
         return uri.hostname, uri.port if uri.port is not None else default_ports[uri.scheme]
+
+    ##
+    # Gets all hosts for the certificate
+    ##
+    def get_hosts(self):
+        return self.data.extensions.get_extension_for_class(x509.SubjectAlternativeName).value.get_values_for_type(x509.DNSName)
 
     ##
     # Validate certificate
     # Returns False if certificate is invalid, timedelta until expiry if valid
     ##
     def validate(self):
-        now = datetime.now()
-        if now < self.data.not_valid_before or now > self.data.not_valid_after:
+        now = datetime.now(UTC)
+        if now < self.data.not_valid_before_utc or now > self.data.not_valid_after_utc:
             return False
-        return self.data.not_valid_after - now
+        return self.data.not_valid_after_utc - now
 
     ##
     # Should the program warn the admins?
     # Returns True or False
     ##
-    def should_warn(self):
-        valid = self.validate()
+    def should_warn(self, valid):
         if not valid:
             return True
-        return valid.total_seconds() >= (self.max_age * 86400)  # max_age * 86400 seconds per day
+        self.logger.debug(f"Max age: {self.max_age * 86400}")
+        self.logger.debug(f"Valid seconds: {valid.total_seconds()}")
+        return valid.total_seconds() <= (self.max_age * 86400)  # max_age * 86400 seconds per day
