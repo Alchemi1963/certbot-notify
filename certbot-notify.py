@@ -8,19 +8,21 @@ from cryptography.x509 import DNSName
 
 from configuration import Configuration
 from certificate import Certificate
+from notification.channel import NotificationChannel
+from notification.script import ChannelScript
 
 
-def process_location(location: str, config: Configuration, logger: logging.Logger, config_location: str = None):
+#TODO: rebuild as class
+#TODO: rebuild to get all compiled config locations only if config file is modified
+
+def process_location(notifier: NotificationChannel, location: str, config: Configuration, logger: logging.Logger,
+                     config_location: str = None):
     logger.info(f'Processing location: {location}')
     cert = Certificate(location, config, logger, config_location)
-    valid = cert.validate()
-    if cert.should_warn(valid):
-        logger.warning(f"{cert.location} expires in just {valid.days} days!")
-    logger.debug(f"{cert.location} expires in {valid.days} days")
-    logger.info(f"Cert is valid for {', '.join(cert.get_hosts())}")
+    notifier.register_certificate(cert)
 
 
-def process_certificates(config: Configuration, logger: logging.Logger):
+def process_certificates(config: Configuration, logger: logging.Logger, notifier: NotificationChannel):
     if config.get('locations') is None or len(config.get('locations')) == 0:
         logger.error('No locations configured')
         sys.exit(1)
@@ -36,12 +38,14 @@ def process_certificates(config: Configuration, logger: logging.Logger):
             sub_locations = config.get('locations', location)
 
             if isinstance(sub_locations, str):
-                process_location(location=sub_locations, config=config, logger=logger, config_location=location)
+                process_location(location=sub_locations, config=config, logger=logger, config_location=location,
+                                 notifier=notifier)
             else:
                 for sub_location in sub_locations:
-                    process_location(location=sub_location, config=config, logger=logger, config_location=location)
+                    process_location(location=sub_location, config=config, logger=logger, config_location=location,
+                                     notifier=notifier)
         else:
-            process_location(location, config, logger)
+            process_location(location=location, config=config, logger=logger, notifier=notifier)
 
 
 def init(config: str, verbose: bool):
@@ -61,16 +65,37 @@ def init(config: str, verbose: bool):
 def define_parser():
     parser = argparse.ArgumentParser('certbot-notify',
                                      description='Python program to check for certificates and notify about expirations.')
-    parser.add_argument('-c', '--config', default="/etc/certbot-notify.conf")
-    parser.add_argument('-p', '--poll', action='append')
-    parser.add_argument('-v', '--verbose', action='store_true', default=False)
+    parser.add_argument('-c', '--config', default="/etc/certbot-notify.conf", help='Set custom configuration file')
+    parser.add_argument('-p', '--poll', action='append',
+                        help='Specify item to poll, script returns in order of polling. This makes the script run once.')
+    parser.add_argument('-v', '--verbose', action='store_true', default=False, help='Verbose output')
+    parser.add_argument('-P', '--print-polls', action='store_true', default=False, help='Print possible items to poll')
 
     return parser
+
+
+def show_polls(notifier: NotificationChannel):
+    logger.info(", ".join(notifier.get_polls()))
+    sys.exit(0)
 
 
 if __name__ == "__main__":
     parser = define_parser()
     args = parser.parse_args()
+    notifier: NotificationChannel = None
 
     config, logger = init(config=args.config, verbose=args.verbose)
-    process_certificates(config, logger)
+
+    if args.poll or args.print_polls:
+        notifier = ChannelScript()
+        if args.print_polls:
+            show_polls(notifier)
+
+    process_certificates(config, logger, notifier)
+
+    if args.poll:
+        poll_result = notifier.poll(args.poll)
+        try:
+            logger.info(', '.join(poll_result))
+        except TypeError:
+            logger.info(poll_result)

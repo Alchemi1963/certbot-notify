@@ -3,7 +3,7 @@ import socket
 import ssl as tls
 from cryptography import x509
 from urllib.parse import urlparse
-from datetime import datetime, UTC
+from datetime import datetime, UTC, timedelta
 
 import configuration
 
@@ -97,22 +97,24 @@ class Certificate:
         return self.data.extensions.get_extension_for_class(x509.SubjectAlternativeName).value.get_values_for_type(x509.DNSName)
 
     ##
-    # Validate certificate
-    # Returns False if certificate is invalid, timedelta until expiry if valid
+    # Returns if timedelta until (or from) expiry
     ##
-    def validate(self):
+    def until_expiry(self) -> timedelta:
         now = datetime.now(UTC)
-        if now < self.data.not_valid_before_utc or now > self.data.not_valid_after_utc:
-            return False
         return self.data.not_valid_after_utc - now
 
     ##
+    # Is cert valid?
+    ##
+    def validate(self) -> bool:
+        now = datetime.now(UTC)
+        return self.data.not_valid_after_utc > now > self.data.not_valid_before_utc
+
+        ##
     # Should the program warn the admins?
     # Returns True or False
     ##
-    def should_warn(self, valid):
-        if not valid:
-            return True
-        self.logger.debug(f"Max age: {self.max_age * 86400}")
-        self.logger.debug(f"Valid seconds: {valid.total_seconds()}")
-        return valid.total_seconds() <= (self.max_age * 86400)  # max_age * 86400 seconds per day
+    def should_warn(self, valid: timedelta) -> bool:
+        self.logger.debug(f"Max age: {self.max_age} days")
+        self.logger.debug(f"Valid days: {valid.days} days")
+        return valid.days <= self.max_age

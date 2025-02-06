@@ -4,8 +4,9 @@ from certificate import Certificate
 
 
 class NotificationChannel(ABC):
+
     def __init__(self):
-        pass
+        self.certificates = {}
 
     ##
     # Send message to notification channel
@@ -20,3 +21,16 @@ class NotificationChannel(ABC):
     @abstractmethod
     def poll(self, param: str) -> int | str:
         pass
+
+    ##
+    # Get possible items to poll
+    ##
+    @abstractmethod
+    def get_polls(self):
+        pass
+
+    def register_certificate(self, cert: Certificate):
+        self.certificates[cert.location.replace('.', '_')] = cert
+
+    def get_certificate(self, ident: str) -> Certificate:
+        return self.certificates[ident] if ident in self.certificates.keys() else None
