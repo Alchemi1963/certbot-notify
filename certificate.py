@@ -37,21 +37,22 @@ default_ports = {
 class Certificate:
     def __init__(self, location: str, config: configuration.Configuration, logger: logging.Logger,
                  config_location: str = None):
-        self.logger = logger
-        self.check_interval = config.get('check-interval', config_location)
-        self.mode = config.get('mode', config_location)
-        self.max_age = config.get('max-age', config_location)
+        self.expiry: timedelta = None
+        self.logger: logging.Logger = logger
+        self.mode: str = config.get('mode', config_location)
+        self.max_age: int = config.get('max-age', config_location)
+        self.msg_template: str = config.get('message-template', config_location)
         self.logger.debug(location)
 
         if self.mode == 'files':
-            self.location = location
+            self.location: str = location
             self.get_cert_files()
 
         elif self.mode == 'host':
             self.ctx = tls.create_default_context()
             self.ctx.check_hostname = False
             self.ctx.verify_mode = tls.CERT_NONE
-            self.location = location
+            self.location: str = location
             self.host, self.port = self.parse_uri(location)
             self.get_cert_host()
 
@@ -101,7 +102,8 @@ class Certificate:
     ##
     def until_expiry(self) -> timedelta:
         now = datetime.now(UTC)
-        return self.data.not_valid_after_utc - now
+        self.expiry = self.data.not_valid_after_utc - now
+        return self.expiry
 
     ##
     # Is cert valid?
@@ -114,7 +116,20 @@ class Certificate:
     # Should the program warn the admins?
     # Returns True or False
     ##
-    def should_warn(self, valid: timedelta) -> bool:
+    def should_warn(self) -> bool:
+        if self.expiry is None:
+            self.until_expiry()
+
         self.logger.debug(f"Max age: {self.max_age} days")
-        self.logger.debug(f"Valid days: {valid.days} days")
-        return valid.days <= self.max_age
+        self.logger.debug(f"Valid days: {self.expiry.days} days")
+        return self.expiry.days <= self.max_age
+
+    def get_message(self):
+        if self.expiry is None:
+            self.until_expiry()
+
+        message = self.msg_template.replace('{nline}', '\n').replace('{cert.host}', self.location).replace('{cert.valid_days}', str(self.expiry.days)).replace('{cert.valid_seconds}', str(int(self.expiry.total_seconds()))).replace('{cert.valid}', str(self.validate())).replace('{cert.max-age}', str(self.max_age)).replace('{cert.alts}', ', '.join(self.get_hosts()))
+
+        self.logger.debug(self.msg_template)
+        self.logger.debug(message)
+        return message

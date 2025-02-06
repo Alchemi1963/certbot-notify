@@ -9,8 +9,8 @@ import logging
 
 class Configuration:
     SECTIONS = {
-        'general': ['mode', 'locations', 'check-interval', 'max-age', 'cert-file'],
-        'mail': ['mail_enable', 'message_template', 'sender', 'receiver', 'smtp_server', 'smtp_user', 'smtp_password']
+        'general': ['mode', 'locations', 'check-interval', 'max-age', 'cert-file', 'message-template'],
+        'mail': ['mail-enable', 'sender', 'receiver', 'smtp-server', 'smtp-port', 'smtp-user', 'smtp-password']
     }  # section: [list of options]
 
     DEFAULTS = {
@@ -19,13 +19,14 @@ class Configuration:
         'check-interval': '24',
         'max-age': '32',
         'cert-file': 'cert.pem',
-        'mail_enable': True,
-        'message_template': 'Certificate for {cert.host} is expiring in {cert.valid_days} days!\nIt also certifies: {cert.alts}',
+        'message-template': 'Certificate for {cert.host} is expiring in {cert.valid_days} days! {nline}It also certifies: {cert.alts}',
+        'mail-enable': 'True',
         'sender': '',
         'receiver': '',
-        'smtp_server': '',
-        'smtp_user': '',
-        'smtp_password': ''
+        'smtp-server': '',
+        'smtp-port': '587',
+        'smtp-user': '',
+        'smtp-password': ''
     }  # option: default value
 
     COMMENTS = {
@@ -40,48 +41,37 @@ class Configuration:
 # Comma separated list of locations
 # If the chosen mode is host, this should be an url. e.g. https://example.org
 # If the chosen mode is files, this should be a directory. e.g. /etc/letsencrypt/live/example.org
-# To specify a location using custom settings, add 'section:' as a prefix to a custom name. e.g. section:example_org
-# Default: https://example.org
-""",
+# To specify a location using custom [general] settings, add 'section:' as a prefix to a custom name. e.g. section:example_org
+# Default: https://example.org""",
         'check-interval': """
 # How often should the certificates be checked in hours.
-# Default: 24
-""",
+# Default: 24""",
         'max-age': """
 # The amount of time in days before warnings about certificate expiry should be issued.
-# Default: 32
-""",
+# Default: 32""",
         'cert-file': """
 # Certificate file to check. e.g. cert.pem, fullchain.pem.
 # This option only applies if files mode is chosen.
 # Note: other certificate files might cause inaccuracies.
-# Default: cert.pem
-""",
-        'mail_enable': """
-# Enable sending notification via mail?
-# Default: True
-""",
-        'message_template': """
+# Default: cert.pem""",
+        'message-template': """
 # Message template.
 # Use {} for substitutions.
-# Valid substitions: 'cert.host', 'cert.valid_days', 'cert.valid_seconds', 'cert.valid', 'cert.max-age' & 'cert.alts'
-# Default: 'Certificate for {cert.host} is expiring in {cert.valid_days} days!\nIt also certifies: {cert.alts}',
-""",
+# Valid substitions: 'nline', 'cert.host', 'cert.valid_days', 'cert.valid_seconds', 'cert.valid', 'cert.max-age' & 'cert.alts'
+# Default: 'Certificate for {cert.host} is expiring in {cert.valid_days} days!\\nIt also certifies: {cert.alts}'""",
+        'mail-enable': """
+# Enable sending notification via mail?
+# Default: True""",
         'sender': """
-# Email address to send the mail from.
-""",
+# Email address to send the mail from.""",
         'receiver': """
-# Email address to send the mail to.
-""",
-        'smtp_server': """
-# SMTP mail server from when to send the mail.
-""",
-        'smtp_user': """
-# SMTP user to send the mail with.
-""",
-        'smtp_password': """
-# Password for SMTP user.
-"""
+# Email address to send the mail to.""",
+        'smtp-server': """
+# SMTP mail server from when to send the mail.""",
+        'smtp-user': """
+# SMTP user to send the mail with.""",
+        'smtp-password': """
+# Password for SMTP user."""
     }
 
     def __init__(self, config_file: string, logger: logging.Logger):

@@ -9,6 +9,7 @@ from cryptography.x509 import DNSName
 from configuration import Configuration
 from certificate import Certificate
 from notification.channel import NotificationChannel
+from notification.mail import ChannelMail
 from notification.script import ChannelScript
 
 
@@ -86,10 +87,19 @@ if __name__ == "__main__":
 
     config, logger = init(config=args.config, verbose=args.verbose)
 
+    logger.debug(config.get('smtp-port'))
+
     if args.poll or args.print_polls:
         notifier = ChannelScript()
         if args.print_polls:
             show_polls(notifier)
+    elif config.get('mail-enable'):
+        notifier = ChannelMail(smtp_server=config.get('smtp-server'),
+                               smtp_port=config.get('smtp-port'),
+                               smtp_user=config.get('smtp-user'),
+                               smtp_password=config.get('smtp-password'),
+                               sender=config.get('sender'),
+                               receiver=config.get('receiver'))
 
     process_certificates(config, logger, notifier)
 
@@ -99,3 +109,5 @@ if __name__ == "__main__":
             logger.info(', '.join(poll_result))
         except TypeError:
             logger.info(poll_result)
+    elif config.get('mail-enable'):
+        notifier.send()

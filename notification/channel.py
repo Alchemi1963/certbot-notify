@@ -1,3 +1,4 @@
+import typing
 from abc import ABC, abstractmethod
 
 from certificate import Certificate
@@ -6,7 +7,7 @@ from certificate import Certificate
 class NotificationChannel(ABC):
 
     def __init__(self):
-        self.certificates = {}
+        self.certificates: typing.Dict[str, Certificate] = {}
 
     ##
     # Send message to notification channel
