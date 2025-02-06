@@ -9,6 +9,7 @@ from cryptography.x509 import DNSName
 from configuration import Configuration
 from certificate import Certificate
 
+
 def process_location(location: str, config: Configuration, logger: logging.Logger, config_location: str = None):
     logger.info(f'Processing location: {location}')
     cert = Certificate(location, config, logger, config_location)
@@ -28,10 +29,20 @@ def process_certificates(config: Configuration, logger: logging.Logger):
 
         if location.startswith('section:'):
             location = location.replace('section:', '')
-            for sub_location in config.get('locations', location):
-                process_location(sub_location, config, logger)
+            if config.get('locations', location) is None:
+                logger.error(f"No location specified for [{location}]")
+                sys.exit(1)
+
+            sub_locations = config.get('locations', location)
+
+            if isinstance(sub_locations, str):
+                process_location(location=sub_locations, config=config, logger=logger, config_location=location)
+            else:
+                for sub_location in sub_locations:
+                    process_location(location=sub_location, config=config, logger=logger, config_location=location)
         else:
             process_location(location, config, logger)
+
 
 def init(config: str, verbose: bool):
     logging.basicConfig(stream=sys.stdout)
@@ -46,16 +57,18 @@ def init(config: str, verbose: bool):
     config.read_config()
     return config, logger
 
+
 def define_parser():
-    parser = argparse.ArgumentParser('certbot-notify', description='Python program to check for certificates and notify about expirations.')
+    parser = argparse.ArgumentParser('certbot-notify',
+                                     description='Python program to check for certificates and notify about expirations.')
     parser.add_argument('-c', '--config', default="/etc/certbot-notify.conf")
     parser.add_argument('-p', '--poll', action='append')
     parser.add_argument('-v', '--verbose', action='store_true', default=False)
 
     return parser
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     parser = define_parser()
     args = parser.parse_args()
 

@@ -14,7 +14,7 @@ class Configuration:
 
     DEFAULTS = {
         'mode': 'host',
-        'locations': '',
+        'locations': None,
         'check-interval': '24',
         'max-age': '32',
         'cert-file': 'cert.pem'
@@ -108,7 +108,7 @@ class Configuration:
                         value = value.split(',')
 
         if value is None:
-            self.logger.info(f"Value for {option} in {section} not found, falling back to {fallback}.")
+            self.logger.info(f"Value for '{option}' in [{section}] not found, falling back to '{fallback}'.")
             value = fallback
 
         return value
@@ -156,6 +156,9 @@ class Configuration:
                 self.logger.info(f"Section '{sec}' found.")
                 section = {}
                 for opt in Configuration.DEFAULTS.keys():
-                    section[opt] = self.__get_option(sec, opt, self.config_values[opt])
+                    if Configuration.DEFAULTS[opt] is None:
+                        section[opt] = self.__get_option(sec, opt, None)
+                    else:
+                        section[opt] = self.__get_option(sec, opt, self.config_values[opt])
                     self.logger.debug(f"Option '{opt}' set to '{section[opt]}'.")
                 self.config_values[sec] = section
