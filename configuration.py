@@ -9,7 +9,8 @@ import logging
 
 class Configuration:
     SECTIONS = {
-        'general': ['mode', 'locations', 'check-interval', 'max-age', 'cert-file']
+        'general': ['mode', 'locations', 'check-interval', 'max-age', 'cert-file'],
+        'mail': ['mail_enable', 'message_template', 'sender', 'receiver', 'smtp_server', 'smtp_user', 'smtp_password']
     }  # section: [list of options]
 
     DEFAULTS = {
@@ -17,7 +18,14 @@ class Configuration:
         'locations': None,
         'check-interval': '24',
         'max-age': '32',
-        'cert-file': 'cert.pem'
+        'cert-file': 'cert.pem',
+        'mail_enable': True,
+        'message_template': 'Certificate for {cert.host} is expiring in {cert.valid_days} days!\nIt also certifies: {cert.alts}',
+        'sender': '',
+        'receiver': '',
+        'smtp_server': '',
+        'smtp_user': '',
+        'smtp_password': ''
     }  # option: default value
 
     COMMENTS = {
@@ -48,6 +56,31 @@ class Configuration:
 # This option only applies if files mode is chosen.
 # Note: other certificate files might cause inaccuracies.
 # Default: cert.pem
+""",
+        'mail_enable': """
+# Enable sending notification via mail?
+# Default: True
+""",
+        'message_template': """
+# Message template.
+# Use {} for substitutions.
+# Valid substitions: 'cert.host', 'cert.valid_days', 'cert.valid_seconds', 'cert.valid', 'cert.max-age' & 'cert.alts'
+# Default: 'Certificate for {cert.host} is expiring in {cert.valid_days} days!\nIt also certifies: {cert.alts}',
+""",
+        'sender': """
+# Email address to send the mail from.
+""",
+        'receiver': """
+# Email address to send the mail to.
+""",
+        'smtp_server': """
+# SMTP mail server from when to send the mail.
+""",
+        'smtp_user': """
+# SMTP user to send the mail with.
+""",
+        'smtp_password': """
+# Password for SMTP user.
 """
     }
 
