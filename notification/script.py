@@ -5,7 +5,7 @@ from notification.channel import NotificationChannel
 
 
 class ChannelScript(NotificationChannel, ABC):
-    polls = ['certs', 'cert.<id>.valid_days', 'cert.<id>.valid_seconds', 'cert.<id>.valid', 'cert.<id>.max-age', 'cert.<id>.should_warn']
+    polls = ['certs', 'cert.<id>.valid_days', 'cert.<id>.valid_seconds', 'cert.<id>.valid', 'cert.<id>.max-age', 'cert.<id>.should_warn', 'cert.<id>.alts']
 
     def send(self):
         pass
@@ -19,6 +19,7 @@ class ChannelScript(NotificationChannel, ABC):
                 cert = self.get_certificate(ident)
                 if cert is None:
                     return None
+
             if p not in self.polls:
                 return None
 
@@ -35,6 +36,7 @@ class ChannelScript(NotificationChannel, ABC):
                     return cert.max_age
                 case 5:
                     return cert.should_warn(cert.until_expiry())
-
+                case 6:
+                    return cert.get_hosts()
     def get_polls(self):
         return self.polls
