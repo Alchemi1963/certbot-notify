@@ -128,7 +128,7 @@ class Certificate:
         if self.expiry is None:
             self.until_expiry()
 
-        message = self.msg_template.replace('{nline}', '\n').replace('{cert.host}', self.location).replace('{cert.valid_days}', str(self.expiry.days)).replace('{cert.valid_seconds}', str(int(self.expiry.total_seconds()))).replace('{cert.valid}', str(self.validate())).replace('{cert.max-age}', str(self.max_age)).replace('{cert.alts}', ', '.join(self.get_hosts()))
+        message = self.msg_template.replace('{nline}', '\n').replace('{cert.host}', self.location).replace('{cert.valid_days}', str(self.expiry.days)).replace('{cert.valid_seconds}', str(int(self.expiry.total_seconds()))).replace('{cert.valid}', str(self.validate())).replace('{cert.max-age}', str(self.max_age)).replace('{cert.alts}', f"{', '.join(self.get_hosts()[:-1])} & {self.get_hosts()[-1]}")
 
         self.logger.debug(self.msg_template)
         self.logger.debug(message)
