@@ -19,7 +19,7 @@ from notification.script import ChannelScript
 class Main:
     def __init__(self, config: str, verbose: bool):
         logging.basicConfig(stream=sys.stdout)
-        self.logger: logging.Logger = logging.getLogger("certbot-notify")
+        self.logger: logging.Logger = logging.getLogger("certnotify")
 
         if verbose:
             self.logger.setLevel(logging.DEBUG)
