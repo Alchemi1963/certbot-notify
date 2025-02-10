@@ -21,10 +21,10 @@ class ChannelMail(NotificationChannel, ABC):
         self.sender: str = sender
         self.receiver: str = receiver
 
-        if not tls:
-            self.smtp_server: smtplib.SMTP = smtplib.SMTP(host=smtp_server, port=smtp_port)
+        if tls:
+            self.smtp_server: smtplib.SMTP = smtplib.SMTP_SSL(host=smtp_server, port=smtp_port)
         else:
-            self.smtp_server: smtplib.SMTP_SSL = smtplib.SMTP_SSL(host=smtp_server, port=smtp_port)
+            self.smtp_server: smtplib.SMTP = smtplib.SMTP(host=smtp_server, port=smtp_port)
 
         if starttls:
             self.__debuglog_command(self.smtp_server.starttls())

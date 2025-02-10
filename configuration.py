@@ -169,8 +169,10 @@ class Configuration:
     ##
     def __get_option(self, section, option, fallback=None, class_type=None):
         value = None
-        if fallback is not None:
+        if fallback is not None and class_type is not bool:
             fallback = class_type(fallback)
+        elif fallback is not None:
+            fallback = fallback == "True"
 
         if class_type == str:
             value = self.config.get(section=section, option=option, fallback=None)
