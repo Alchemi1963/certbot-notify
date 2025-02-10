@@ -2,10 +2,6 @@ import argparse
 import logging
 import sys
 from argparse import ArgumentParser, Namespace
-from pydoc import describe
-
-from cryptography import x509
-from cryptography.x509 import DNSName
 
 from configuration import Configuration
 from certificate import Certificate
@@ -13,8 +9,6 @@ from notification.channel import NotificationChannel
 from notification.mail import ChannelMail
 from notification.script import ChannelScript
 
-
-#TODO: rebuild to get all compiled config locations only if config file is modified
 
 class Main:
     def __init__(self, config: str, verbose: bool):
@@ -84,7 +78,7 @@ class Main:
         elif isinstance(self.notifier, ChannelMail):
             self.notifier.send()
 
-parser = argparse.ArgumentParser('certbot-notify',
+parser = ArgumentParser('certbot-notify',
                                  description='Python program to check for certificates and notify about expirations.')
 parser.add_argument('-c', '--config', default="/etc/certbot-notify.conf", help='Set custom configuration file')
 parser.add_argument('-p', '--poll', action='append',
