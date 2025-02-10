@@ -11,7 +11,7 @@ class Configuration:
     SECTIONS = {
         'general': ['check-interval', 'auto-load-certs'],
         'certificates': ['poll-mode', 'locations', 'max-age', 'cert-file', 'message-template'],
-        'mail': ['mail-enable', 'sender', 'receiver', 'smtp-server', 'smtp-port', 'smtp-tls', 'smtp-starttls', 'smtp-user', 'smtp-password']
+        'mail': ['mail-enable', 'sender', 'receiver', 'smtp-server', 'smtp-port', 'smtp-security', 'smtp-user', 'smtp-password']
     }  # section: [list of options]
 
     DEFAULTS = {
@@ -27,8 +27,7 @@ class Configuration:
         'receiver': ('', str),
         'smtp-server': ('', str),
         'smtp-port': ('587', int),
-        'smtp-tls': ('False', bool),
-        'smtp-starttls': ('True', bool),
+        'smtp-security': ('STARTTLS', str),
         'smtp-user': ('', str),
         'smtp-password': ('', str)
     }  # option: default value
@@ -79,7 +78,11 @@ class Configuration:
         'smtp-user': """
 # SMTP user to send the mail with.""",
         'smtp-password': """
-# Password for SMTP user."""
+# Password for SMTP user.""",
+        'smtp-security': """
+# What type of security should be established with the SMTP server?
+# PLAIN: no security, TLS, STARTTLS
+# Default: STARTTLS"""
     }
 
     def __init__(self, config_file: string, logger: logging.Logger):

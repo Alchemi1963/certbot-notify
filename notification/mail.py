@@ -10,8 +10,8 @@ from notification.channel import NotificationChannel
 import smtplib
 
 class ChannelMail(NotificationChannel, ABC):
-    def __init__(self, logger: logging.Logger, smtp_server: str, smtp_port: int, smtp_user: str, smtp_password: str, sender: str,
-                 receiver: str, tls: bool, starttls: bool):
+    def __init__(self, logger: logging.Logger, smtp_server: str, smtp_port: int, smtp_security: str, smtp_user: str, smtp_password: str, sender: str,
+                 receiver: str):
         super().__init__(logger)
 
         if not all([smtp_server, smtp_port, smtp_user, smtp_password, sender, receiver]):
@@ -21,13 +21,16 @@ class ChannelMail(NotificationChannel, ABC):
         self.sender: str = sender
         self.receiver: str = receiver
 
-        if tls:
-            self.smtp_server: smtplib.SMTP = smtplib.SMTP_SSL(host=smtp_server, port=smtp_port)
-        else:
-            self.smtp_server: smtplib.SMTP = smtplib.SMTP(host=smtp_server, port=smtp_port)
-
-        if starttls:
-            self.__debuglog_command(self.smtp_server.starttls())
+        match smtp_security.upper():
+            case "STARTTLS":
+                self.smtp_server: smtplib.SMTP = smtplib.SMTP(host=smtp_server, port=smtp_port)
+                self.__debuglog_command(self.smtp_server.starttls())
+            case "TLS":
+                self.smtp_server: smtplib.SMTP = smtplib.SMTP_SSL(host=smtp_server, port=smtp_port)
+            case "PLAIN":
+                self.smtp_server: smtplib.SMTP = smtplib.SMTP(host=smtp_server, port=smtp_port)
+            case _:
+                self.smtp_server: smtplib.SMTP = smtplib.SMTP(host=smtp_server, port=smtp_port)
 
         try:
             self.__debuglog_command(self.smtp_server.login(smtp_user, smtp_password))
