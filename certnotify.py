@@ -85,6 +85,9 @@ parser.add_argument('-v', '--verbose', action='store_true', default=False, help=
 parser.add_argument('-P', '--print-polls', action='store_true', default=False, help='Print possible items to poll')
 parser.add_argument('-l', '--log-level', default='INFO', help='Define log level. Choose from DEBUG, INFO, WARN, ERROR, FATAL, CRITICAL')
 
+# TODO: add cron installer
+# TODO: make programme installer (bash .deb .wheel?)
+
 if __name__ == "__main__":
     args = parser.parse_args()
 
