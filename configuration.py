@@ -9,24 +9,25 @@ import logging
 
 class Configuration:
     SECTIONS = {
-        'general': ['mode', 'locations', 'check-interval', 'max-age', 'cert-file', 'message-template'],
+        'general': ['check-interval'],
+        'certificates': ['poll-mode', 'locations', 'max-age', 'cert-file', 'message-template'],
         'mail': ['mail-enable', 'sender', 'receiver', 'smtp-server', 'smtp-port', 'smtp-user', 'smtp-password']
     }  # section: [list of options]
 
     DEFAULTS = {
-        'mode': 'host',
-        'locations': None,
-        'check-interval': '24',
-        'max-age': '32',
-        'cert-file': 'cert.pem',
-        'message-template': 'Certificate for {cert.host} is expiring in {cert.valid_days} days! {nline}It also certifies: {cert.alts}',
-        'mail-enable': 'True',
-        'sender': '',
-        'receiver': '',
-        'smtp-server': '',
-        'smtp-port': '587',
-        'smtp-user': '',
-        'smtp-password': ''
+        'mode': ('host', str.__class__),
+        'locations': (None, typing.List.__class__),
+        'check-interval': ('24', int.__class__),
+        'max-age': ('32', int.__class__),
+        'cert-file': ('cert.pem', str.__class__),
+        'message-template': ('Certificate for {cert.host} is expiring in {cert.valid_days} days! {nline}It also certifies: {cert.alts}', str.__class__),
+        'mail-enable': ('True', bool.__class__),
+        'sender': ('', str.__class__),
+        'receiver': ('', str.__class__),
+        'smtp-server': ('', str.__class__),
+        'smtp-port': ('587', int.__class__),
+        'smtp-user': ('', str.__class__),
+        'smtp-password': ('', str.__class__)
     }  # option: default value
 
     COMMENTS = {
@@ -113,38 +114,6 @@ class Configuration:
             self.config.write(conf)
 
     ##
-    # Option value getter which returns in the correct variable type
-    # Returns option value or fallback
-    ##
-    def __get_option(self, section, option, fallback=None):
-        try:
-            value = self.config.getint(section, option, fallback=None)
-        except ValueError:
-            try:
-                value = self.config.getfloat(section, option, fallback=None)
-            except ValueError:
-                try:
-                    value = self.config.getboolean(section, option, fallback=None)
-                except ValueError:
-                    value = self.config.get(section, option, fallback=None)
-                    if ',' in value:
-                        value = value.split(',')
-
-        if value is None:
-            self.logger.info(f"Value for '{option}' in [{section}] not found, falling back to '{fallback}'.")
-            value = fallback
-
-        return value
-
-    ##
-    # Getter help function for configuration values
-    ##
-    def get(self, option: str, location = None) -> str | int | float | typing.List[str] | bool:
-        if location is not None:
-            return self.config_values.get(location).get(option)
-        return self.config_values.get(option) if option in self.config_values else None
-
-    ##
     # Config reader
     # Returns config values in a dict
     ##
@@ -168,7 +137,7 @@ class Configuration:
                     self.config.set(sec, Configuration.DEFAULTS[opt])
 
             for opt in opts:
-                self.config_values[opt] = self.__get_option(sec, opt, Configuration.DEFAULTS[opt])
+                self.config_values[opt] = self.__get_option(section=sec, option=opt, fallback=Configuration.DEFAULTS[opt][0], class_type=Configuration.DEFAULTS[opt][1])
 
     def __get_extra_sections(self):
         # Get the extra custom values
@@ -180,8 +149,43 @@ class Configuration:
                 section = {}
                 for opt in Configuration.DEFAULTS.keys():
                     if Configuration.DEFAULTS[opt] is None:
-                        section[opt] = self.__get_option(sec, opt, None)
+                        section[opt] = self.__get_option(section=sec, option=opt, fallback=None, class_type=Configuration.DEFAULTS[opt][1])
                     else:
-                        section[opt] = self.__get_option(sec, opt, self.config_values[opt])
+                        section[opt] = self.__get_option(section=sec, option=opt, fallback=self.config_values[opt], class_type=Configuration.DEFAULTS[opt][1])
                     self.logger.debug(f"Option '{opt}' set to '{section[opt]}'.")
                 self.config_values[sec] = section
+
+    ##
+    # Option value getter which returns in the correct variable type
+    # Returns option value or fallback
+    ##
+    def __get_option(self, section, option, fallback=None, class_type=None):
+        match class_type:
+            case str.__class__:
+                value = self.config.get(section=section, option=option, fallback=None)
+            case int.__class__:
+                value = self.config.getint(section=section, option=option, fallback=None)
+            case float.__class__:
+                value = self.config.getfloat(section=section, option=option, fallback=None)
+            case bool.__class__:
+                value = self.config.getboolean(section=section, option=option, fallback=None)
+            case typing.List.__class__:
+                value = self.config.get(section=section, option=option, fallback=None).split(',')
+            case _:
+                value = None
+
+        if value is None:
+            self.logger.info(f"Value for '{option}' in [{section}] not found, falling back to '{fallback}'.")
+            value = fallback
+
+        return value
+
+    ##
+    # Getter help function for configuration values
+    ##
+    def get(self, option: str, location = None) -> str | int | float | typing.List[str] | bool:
+        if location is not None:
+            return self.config_values.get(location).get(option)
+        return self.config_values.get(option) if option in self.config_values else None
+
+

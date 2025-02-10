@@ -39,7 +39,7 @@ class Certificate:
                  config_location: str = None):
         self.expiry: timedelta = None
         self.logger: logging.Logger = logger
-        self.mode: str = config.get('mode', config_location)
+        self.mode: str = config.get('poll-mode', config_location)
         self.max_age: int = config.get('max-age', config_location)
         self.msg_template: str = config.get('message-template', config_location)
         self.logger.debug(location)
