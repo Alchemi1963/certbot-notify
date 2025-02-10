@@ -23,6 +23,8 @@ class ChannelScript(NotificationChannel, ABC):
                 cert = self.get_certificate(ident)
                 if cert is None:
                     return None
+                elif cert.data is None:
+                    cert.load_cert_data()
 
             if p not in self.polls:
                 return None
@@ -43,4 +45,6 @@ class ChannelScript(NotificationChannel, ABC):
                 case 6:
                     return ', '.join(cert.get_hosts())
                 case 7:
-                    return self.polls.copy().remove('polls')
+                    polls = self.polls.copy()
+                    polls.remove('polls')
+                    return ', '.join(polls)

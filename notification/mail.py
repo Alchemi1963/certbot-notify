@@ -24,13 +24,20 @@ class ChannelMail(NotificationChannel, ABC):
         self.smtp_server.user = smtp_user
         self.smtp_server.password = smtp_password
         try:
-            print(self.smtp_server.starttls())
-            print(self.smtp_server.auth('plain', self.smtp_server.auth_plain))
+            stls = self.smtp_server.starttls()
+            auth = self.smtp_server.auth('plain', self.smtp_server.auth_plain)
+            self.logger.debug(f'Code {str(stls[0])} - {stls[1].decode()}')
+            self.logger.debug(f'Code {str(auth[0])} - {auth[1].decode()}')
         except SMTPNotSupportedError:
             sys.exit(1)
 
     def send(self, params: typing.List[str] = None) -> typing.Any:
+        self.prune_certificates()
+
         for cert in self.certificates.values():
+            if cert.data is None:
+                cert.load_cert_data()
+
             cert.until_expiry()
             if cert.should_warn():
                 msg = EmailMessage()

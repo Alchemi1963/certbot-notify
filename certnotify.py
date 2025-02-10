@@ -11,14 +11,11 @@ from notification.script import ChannelScript
 
 
 class Main:
-    def __init__(self, config: str, verbose: bool):
+    def __init__(self, config: str, level: str):
         logging.basicConfig(stream=sys.stdout)
         self.logger: logging.Logger = logging.getLogger("certnotify")
 
-        if verbose:
-            self.logger.setLevel(logging.DEBUG)
-        else:
-            self.logger.setLevel(logging.INFO)
+        self.logger.setLevel(logging.getLevelNamesMapping()[level.upper()])
 
         self.config: Configuration = Configuration(config, self.logger)
         self.config.read_config()
@@ -37,10 +34,13 @@ class Main:
                                                              sender=self.config.get('sender'),
                                                              receiver=self.config.get('receiver'))
 
-    def process_location(self, location: str, config_location: str = None):
+    def get_certificate(self, location: str, config_location: str = None):
         self.logger.info(f'Processing location: {location}')
         cert = Certificate(location, self.config, self.logger, config_location)
         self.notifier.register_certificate(cert)
+
+        if self.config.get('auto-load-certs'):
+            cert.load_cert_data()
 
     def process_certificates(self):
 
@@ -58,13 +58,13 @@ class Main:
                     sys.exit(1)
 
                 for sub_location in self.config.get('locations', location):
-                    self.process_location(location=sub_location, config_location=location)
+                    self.get_certificate(location=sub_location, config_location=location)
 
             else:
-                self.process_location(location=location)
+                self.get_certificate(location=location)
 
     def show_polls(self):
-        self.logger.info(", ".join(self.notifier.send(['polls'])))
+        self.logger.info(self.notifier.send(['polls']))
         sys.exit(0)
 
     def finish(self):
@@ -81,17 +81,21 @@ parser = ArgumentParser('certbot-notify',
 parser.add_argument('-c', '--config', default="/etc/certbot-notify.conf", help='Set custom configuration file')
 parser.add_argument('-p', '--poll', action='append',
                     help='Specify item to poll, script returns in order of polling. This makes the script run once.')
-parser.add_argument('-v', '--verbose', action='store_true', default=False, help='Verbose output')
+parser.add_argument('-v', '--verbose', action='store_true', default=False, help='Verbose output, equal to: --log-level DEBUG')
 parser.add_argument('-P', '--print-polls', action='store_true', default=False, help='Print possible items to poll')
+parser.add_argument('-l', '--log-level', default='INFO', help='Define log level. Choose from DEBUG, INFO, WARN, ERROR, FATAL, CRITICAL')
 
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    main = Main(config=args.config, verbose=args.verbose)
+    if args.verbose:
+        args.log_level = 'DEBUG'
+
+    main = Main(config=args.config, level=args.log_level)
     main.setup_channel(args.poll or args.print_polls)
 
     if args.print_polls:
         main.show_polls()
     else:
-        main.process_certificates() # TODO: Prevent duplicate cert send
-        main.finish(args)
+        main.process_certificates()
+        main.finish()

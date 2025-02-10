@@ -23,3 +23,23 @@ class NotificationChannel(ABC):
 
     def get_certificate(self, ident: str) -> Certificate:
         return self.certificates[ident] if ident in self.certificates.keys() else None
+
+    def has_certificate(self, cert: Certificate):
+        for c in self.certificates.values():
+            if c == cert:
+                return True
+
+        return False
+
+
+    def prune_certificates(self):
+        for key, cert in self.certificates.copy().items():
+            for k, c in self.certificates.items():
+                if k == key:
+                    continue
+                elif c == cert:
+                    self.logger.debug(f"Pruning {k} from registry, it's the same certificate as {key}")
+                    self.certificates.pop(k) # keep first occurance
+                    self.prune_certificates()
+                    return
+

@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 import logging
 import socket
 import ssl as tls
 from cryptography import x509
 from urllib.parse import urlparse
 from datetime import datetime, UTC, timedelta
+from os.path import join as path_join
 
 import configuration
 
@@ -44,13 +47,30 @@ class Certificate:
         self.msg_template: str = config.get('message-template', config_location)
         self.logger.debug(location)
         self.location: str = location
+        self.config = config
+        self.data = None
+
+    def __eq__(self, other: Certificate):
+        if self.data is None or other.data is None:
+            return False
+
+        return (self.get_hosts() == other.get_hosts()
+                and self.data.not_valid_after_utc == other.data.not_valid_after_utc
+                and self.data.not_valid_before_utc == other.data.not_valid_before_utc
+                and self.data.version == other.data.version
+                and self.data.issuer == other.data.issuer)
 
     ##
     # Load certificate data from PEM format.
     ##
     def load_cert_data(self):
-        if self.mode == 'files':
+        if self.data is not None:
+            return
+
+        elif self.mode == 'files':
+            self.location = path_join(self.location, self.config.get('cert-file'))
             self.get_cert_files()
+
         elif self.mode == 'host':
             self.ctx = tls.create_default_context()
             self.ctx.check_hostname = False
@@ -125,8 +145,15 @@ class Certificate:
         if self.expiry is None:
             self.until_expiry()
 
-        message = self.msg_template.replace('{nline}', '\n').replace('{cert.host}', self.location).replace('{cert.valid_days}', str(self.expiry.days)).replace('{cert.valid_seconds}', str(int(self.expiry.total_seconds()))).replace('{cert.valid}', str(self.validate())).replace('{cert.max-age}', str(self.max_age)).replace('{cert.alts}', f"{', '.join(self.get_hosts()[:-1])} & {self.get_hosts()[-1]}")
+        message = (self.msg_template
+                   .replace('{nline}', '\n')
+                   .replace('{cert.host}', self.location)
+                   .replace('{cert.valid_days}', str(self.expiry.days))
+                   .replace('{cert.valid_seconds}', str(int(self.expiry.total_seconds())))
+                   .replace('{cert.valid}', str(self.validate()))
+                   .replace('{cert.max-age}', str(self.max_age))
+                   .replace('{cert.alts}', f"{', '.join(self.get_hosts()[:-1])} & {self.get_hosts()[-1]}"))
 
-        self.logger.debug(self.msg_template)
         self.logger.debug(message)
+
         return message

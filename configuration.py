@@ -9,28 +9,36 @@ import logging
 
 class Configuration:
     SECTIONS = {
-        'general': ['check-interval'],
+        'general': ['check-interval', 'auto-load-certs'],
         'certificates': ['poll-mode', 'locations', 'max-age', 'cert-file', 'message-template'],
         'mail': ['mail-enable', 'sender', 'receiver', 'smtp-server', 'smtp-port', 'smtp-user', 'smtp-password']
     }  # section: [list of options]
 
     DEFAULTS = {
-        'poll-mode': ('host', str.__class__),
-        'locations': (None, typing.List.__class__),
-        'check-interval': ('24', int.__class__),
-        'max-age': ('32', int.__class__),
-        'cert-file': ('cert.pem', str.__class__),
-        'message-template': ('Certificate for {cert.host} is expiring in {cert.valid_days} days! {nline}It also certifies: {cert.alts}', str.__class__),
-        'mail-enable': ('True', bool.__class__),
-        'sender': ('', str.__class__),
-        'receiver': ('', str.__class__),
-        'smtp-server': ('', str.__class__),
-        'smtp-port': ('587', int.__class__),
-        'smtp-user': ('', str.__class__),
-        'smtp-password': ('', str.__class__)
+        'check-interval': ('24', int),
+        'auto-load-certs': ('True', bool),
+        'poll-mode': ('host', str),
+        'locations': ('', list),
+        'max-age': ('32', int),
+        'cert-file': ('cert.pem', str),
+        'message-template': ('Certificate for {cert.host} is expiring in {cert.valid_days} days! {nline}It also certifies: {cert.alts}', str),
+        'mail-enable': ('True', bool),
+        'sender': ('', str),
+        'receiver': ('', str),
+        'smtp-server': ('', str),
+        'smtp-port': ('587', int),
+        'smtp-user': ('', str),
+        'smtp-password': ('', str)
     }  # option: default value
 
     COMMENTS = {
+        'check-interval': """
+# How often should the certificates be checked in hours.
+# Default: 24""",
+        'auto-load-certs': """
+# Should the programme automatically load the certificate data?
+# Useful for the script polling mode
+# Default: True""",
         'poll-mode': """
 # Determines what mode to use in general.
 # this option can be overridden per location in optional [units]
@@ -44,9 +52,6 @@ class Configuration:
 # If the chosen mode is files, this should be a directory. e.g. /etc/letsencrypt/live/example.org
 # To specify a location using custom [certificates] settings, add 'section:' as a prefix to a custom name. e.g. section:example_org
 # Default: https://example.org""",
-        'check-interval': """
-# How often should the certificates be checked in hours.
-# Default: 24""",
         'max-age': """
 # The amount of time in days before warnings about certificate expiry should be issued.
 # Default: 32""",
@@ -58,7 +63,7 @@ class Configuration:
         'message-template': """
 # Message template.
 # Use {} for substitutions.
-# Valid substitions: 'nline', 'cert.host', 'cert.valid_days', 'cert.valid_seconds', 'cert.valid', 'cert.max-age' & 'cert.alts'
+# Valid substitutions: 'nline', 'cert.host', 'cert.valid_days', 'cert.valid_seconds', 'cert.valid', 'cert.max-age' & 'cert.alts'
 # Default: 'Certificate for {cert.host} is expiring in {cert.valid_days} days!\\nIt also certifies: {cert.alts}'""",
         'mail-enable': """
 # Enable sending notification via mail?
@@ -149,7 +154,7 @@ class Configuration:
                 self.logger.info(f"Section '{sec}' found.")
                 section = {}
                 for opt in Configuration.SECTIONS['certificates']:
-                    if Configuration.DEFAULTS[opt] is None:
+                    if Configuration.DEFAULTS[opt] is '':
                         section[opt] = self.__get_option(section=sec, option=opt, fallback=None, class_type=Configuration.DEFAULTS[opt][1])
                     else:
                         section[opt] = self.__get_option(section=sec, option=opt, fallback=self.config_values[opt], class_type=Configuration.DEFAULTS[opt][1])
@@ -161,24 +166,31 @@ class Configuration:
     # Returns option value or fallback
     ##
     def __get_option(self, section, option, fallback=None, class_type=None):
-        match class_type:
-            case str.__class__:
-                value = self.config.get(section=section, option=option, fallback=None)
-            case int.__class__:
-                value = self.config.getint(section=section, option=option, fallback=None)
-            case float.__class__:
-                value = self.config.getfloat(section=section, option=option, fallback=None)
-            case bool.__class__:
-                value = self.config.getboolean(section=section, option=option, fallback=None)
-            case typing.List.__class__:
-                value = self.config.get(section=section, option=option, fallback=None)
-                if value is not None:
-                    value = value.split(',')
-            case _:
-                value = None
+        value = None
+        if fallback is not None:
+            fallback = class_type(fallback)
 
-        if value is None:
-            self.logger.info(f"Value for '{option}' in [{section}] not found, falling back to '{fallback}'.")
+        if class_type == str:
+            value = self.config.get(section=section, option=option, fallback=None)
+
+        elif class_type == int:
+            value = self.config.getint(section=section, option=option, fallback=None)
+
+        elif class_type == float:
+            value = self.config.getfloat(section=section, option=option, fallback=None)
+
+        elif class_type == bool:
+            value = self.config.getboolean(section=section, option=option, fallback=None)
+
+        elif class_type == list:
+            value = self.config.get(section=section, option=option, fallback=None)
+            if value is not None:
+                value = value.split(',')
+
+
+        if value is None and fallback is not None and fallback is not '':
+            if section in Configuration.SECTIONS.keys():
+                self.logger.info(f"Value for '{option}' in [{section}] not found, falling back to '{fallback}'.")
             value = fallback
 
         return value
