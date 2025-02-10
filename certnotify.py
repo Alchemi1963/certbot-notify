@@ -1,7 +1,6 @@
-import argparse
 import logging
 import sys
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 
 from configuration import Configuration
 from certificate import Certificate
@@ -29,6 +28,8 @@ class Main:
             self.notifier: NotificationChannel = ChannelMail(logger= self.logger,
                                                              smtp_server=self.config.get('smtp-server'),
                                                              smtp_port=self.config.get('smtp-port'),
+                                                             tls=self.config.get('smtp-tls'),
+                                                             starttls=self.config.get('smtp-starttls'),
                                                              smtp_user=self.config.get('smtp-user'),
                                                              smtp_password=self.config.get('smtp-password'),
                                                              sender=self.config.get('sender'),

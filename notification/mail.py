@@ -4,14 +4,14 @@ import typing
 from abc import ABC
 
 from email.message import EmailMessage
-from smtplib import SMTPNotSupportedError
+from smtplib import SMTPNotSupportedError, SMTPAuthenticationError, SMTPException
 
 from notification.channel import NotificationChannel
 import smtplib
 
 class ChannelMail(NotificationChannel, ABC):
     def __init__(self, logger: logging.Logger, smtp_server: str, smtp_port: int, smtp_user: str, smtp_password: str, sender: str,
-                 receiver: str):
+                 receiver: str, tls: bool, starttls: bool):
         super().__init__(logger)
 
         if not all([smtp_server, smtp_port, smtp_user, smtp_password, sender, receiver]):
@@ -20,15 +20,25 @@ class ChannelMail(NotificationChannel, ABC):
 
         self.sender: str = sender
         self.receiver: str = receiver
-        self.smtp_server: smtplib.SMTP = smtplib.SMTP(host=smtp_server, port=smtp_port)
-        self.smtp_server.user = smtp_user
-        self.smtp_server.password = smtp_password
+
+        if not tls:
+            self.smtp_server: smtplib.SMTP = smtplib.SMTP(host=smtp_server, port=smtp_port)
+        else:
+            self.smtp_server: smtplib.SMTP_SSL = smtplib.SMTP_SSL(host=smtp_server, port=smtp_port)
+
+        if starttls:
+            self.__debuglog_command(self.smtp_server.starttls())
+
         try:
-            stls = self.smtp_server.starttls()
-            auth = self.smtp_server.auth('plain', self.smtp_server.auth_plain)
-            self.logger.debug(f'Code {str(stls[0])} - {stls[1].decode()}')
-            self.logger.debug(f'Code {str(auth[0])} - {auth[1].decode()}')
+            self.__debuglog_command(self.smtp_server.login(smtp_user, smtp_password))
         except SMTPNotSupportedError:
+            self.logger.error('SMTP server does not support AUTH command.')
+            sys.exit(1)
+        except SMTPAuthenticationError:
+            self.logger.error('Provided user/password combination invalid for SMTP server.')
+            sys.exit(1)
+        except SMTPException:
+            self.logger.error('No suitable authentication method was found for the SMTP server.')
             sys.exit(1)
 
     def send(self, params: typing.List[str] = None) -> typing.Any:
@@ -46,3 +56,6 @@ class ChannelMail(NotificationChannel, ABC):
                 msg['From'] = self.sender
                 msg['To'] = self.receiver
                 self.smtp_server.send_message(msg)
+
+    def __debuglog_command(self, command: typing.Tuple[int, bytes]):
+        self.logger.debug(f'Code {str(command[0])} - {command[1].decode()}')

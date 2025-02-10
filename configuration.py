@@ -11,7 +11,7 @@ class Configuration:
     SECTIONS = {
         'general': ['check-interval', 'auto-load-certs'],
         'certificates': ['poll-mode', 'locations', 'max-age', 'cert-file', 'message-template'],
-        'mail': ['mail-enable', 'sender', 'receiver', 'smtp-server', 'smtp-port', 'smtp-user', 'smtp-password']
+        'mail': ['mail-enable', 'sender', 'receiver', 'smtp-server', 'smtp-port', 'smtp-tls', 'smtp-starttls', 'smtp-user', 'smtp-password']
     }  # section: [list of options]
 
     DEFAULTS = {
@@ -27,6 +27,8 @@ class Configuration:
         'receiver': ('', str),
         'smtp-server': ('', str),
         'smtp-port': ('587', int),
+        'smtp-tls': ('False', bool),
+        'smtp-starttls': ('True', bool),
         'smtp-user': ('', str),
         'smtp-password': ('', str)
     }  # option: default value
