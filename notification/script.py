@@ -5,12 +5,16 @@ from notification.channel import NotificationChannel
 
 
 class ChannelScript(NotificationChannel, ABC):
-    polls = ['certs', 'cert.<id>.valid_days', 'cert.<id>.valid_seconds', 'cert.<id>.valid', 'cert.<id>.max-age', 'cert.<id>.should_warn', 'cert.<id>.alts']
+    polls = ['certs',
+             'cert.<id>.valid_days',
+             'cert.<id>.valid_seconds',
+             'cert.<id>.valid',
+             'cert.<id>.max-age',
+             'cert.<id>.should_warn',
+             'cert.<id>.alts',
+             'polls']
 
-    def send(self):
-        pass
-
-    def poll(self, params: typing.List[str]) -> int | float | str | None:
+    def send(self, params: typing.List[str] = None) -> typing.Any:
         for p in params:
             cert = None
             if '.' in p:
@@ -25,7 +29,7 @@ class ChannelScript(NotificationChannel, ABC):
 
             match self.polls.index(p):
                 case 0:
-                    return self.certificates.keys()
+                    return ', '.join(self.certificates.keys())
                 case 1:
                     return cert.until_expiry().days
                 case 2:
@@ -35,8 +39,8 @@ class ChannelScript(NotificationChannel, ABC):
                 case 4:
                     return cert.max_age
                 case 5:
-                    return cert.should_warn(cert.until_expiry())
+                    return cert.should_warn()
                 case 6:
-                    return cert.get_hosts()
-    def get_polls(self):
-        return self.polls
+                    return ', '.join(cert.get_hosts())
+                case 7:
+                    return self.polls.copy().remove('polls')

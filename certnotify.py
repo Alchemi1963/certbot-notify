@@ -27,9 +27,10 @@ class Main:
 
     def setup_channel(self, polling_mode = False):
         if polling_mode:
-            self.notifier: NotificationChannel = ChannelScript()
+            self.notifier: NotificationChannel = ChannelScript(self.logger)
         elif self.config.get('mail-enable'):
-            self.notifier: NotificationChannel = ChannelMail(smtp_server=self.config.get('smtp-server'),
+            self.notifier: NotificationChannel = ChannelMail(logger= self.logger,
+                                                             smtp_server=self.config.get('smtp-server'),
                                                              smtp_port=self.config.get('smtp-port'),
                                                              smtp_user=self.config.get('smtp-user'),
                                                              smtp_password=self.config.get('smtp-password'),
@@ -42,6 +43,7 @@ class Main:
         self.notifier.register_certificate(cert)
 
     def process_certificates(self):
+
         if self.config.get('locations') is None or len(self.config.get('locations')) == 0:
             self.logger.error('No locations configured')
             sys.exit(1)
@@ -50,31 +52,27 @@ class Main:
 
             if location.startswith('section:'):
                 location = location.replace('section:', '')
+
                 if self.config.get('locations', location) is None:
                     self.logger.error(f"No location specified for [{location}]")
                     sys.exit(1)
 
-                sub_locations = self.config.get('locations', location)
+                for sub_location in self.config.get('locations', location):
+                    self.process_location(location=sub_location, config_location=location)
 
-                if isinstance(sub_locations, str):
-                    self.process_location(location=sub_locations, config_location=location)
-                else:
-                    for sub_location in sub_locations:
-                        self.process_location(location=sub_location, config_location=location)
             else:
                 self.process_location(location=location)
 
     def show_polls(self):
-        self.logger.info(", ".join(self.notifier.get_polls()))
+        self.logger.info(", ".join(self.notifier.send(['polls'])))
         sys.exit(0)
 
-    def finish(self, args: Namespace):
+    def finish(self):
+
         if isinstance(self.notifier, ChannelScript):
-            result = self.notifier.poll(args.poll)
-            if len(args.poll) > 1:
-                self.logger.info(', '.join(result)) # TODO: incorporate this in .send()?
-            else:
-                self.logger.info(result)
+            result = self.notifier.send(args.poll)
+            self.logger.info(result)
+
         elif isinstance(self.notifier, ChannelMail):
             self.notifier.send()
 

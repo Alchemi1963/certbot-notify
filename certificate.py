@@ -43,25 +43,22 @@ class Certificate:
         self.max_age: int = config.get('max-age', config_location)
         self.msg_template: str = config.get('message-template', config_location)
         self.logger.debug(location)
-
-        if self.mode == 'files':
-            self.location: str = location
-            self.get_cert_files()
-
-        elif self.mode == 'host':
-            self.ctx = tls.create_default_context()
-            self.ctx.check_hostname = False
-            self.ctx.verify_mode = tls.CERT_NONE
-            self.location: str = location
-            self.host, self.port = self.parse_uri(location)
-            self.get_cert_host()
-
-        self.load_cert_data()
+        self.location: str = location
 
     ##
     # Load certificate data from PEM format.
     ##
     def load_cert_data(self):
+        if self.mode == 'files':
+            self.get_cert_files()
+        elif self.mode == 'host':
+            self.ctx = tls.create_default_context()
+            self.ctx.check_hostname = False
+            self.ctx.verify_mode = tls.CERT_NONE
+
+            self.host, self.port = self.parse_uri(self.location)
+            self.get_cert_host()
+
         self.data = x509.load_pem_x509_certificate(str.encode(self.cert))
 
     ##

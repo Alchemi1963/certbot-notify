@@ -1,3 +1,4 @@
+import logging
 import typing
 from abc import ABC, abstractmethod
 
@@ -6,28 +7,15 @@ from certificate import Certificate
 
 class NotificationChannel(ABC):
 
-    def __init__(self):
+    def __init__(self, logger: logging.Logger):
         self.certificates: typing.Dict[str, Certificate] = {}
+        self.logger: logging.Logger = logger
 
     ##
     # Send message to notification channel
     ##
     @abstractmethod
-    def send(self):
-        pass
-
-    ##
-    # Poll for data
-    ##
-    @abstractmethod
-    def poll(self, param: str) -> int | str:
-        pass
-
-    ##
-    # Get possible items to poll
-    ##
-    @abstractmethod
-    def get_polls(self):
+    def send(self, params: typing.List[str] = None) -> typing.Any:
         pass
 
     def register_certificate(self, cert: Certificate):

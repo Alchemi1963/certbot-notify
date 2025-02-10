@@ -1,4 +1,6 @@
+import logging
 import sys
+import typing
 from abc import ABC
 
 from email.message import EmailMessage
@@ -8,9 +10,14 @@ from notification.channel import NotificationChannel
 import smtplib
 
 class ChannelMail(NotificationChannel, ABC):
-    def __init__(self, smtp_server: str, smtp_port: int, smtp_user: str, smtp_password: str, sender: str,
+    def __init__(self, logger: logging.Logger, smtp_server: str, smtp_port: int, smtp_user: str, smtp_password: str, sender: str,
                  receiver: str):
-        super().__init__()
+        super().__init__(logger)
+
+        if not all([smtp_server, smtp_port, smtp_user, smtp_password, sender, receiver]):
+            self.logger.error("No SMTP server properly configured. Exiting.")
+            sys.exit(1)
+
         self.sender: str = sender
         self.receiver: str = receiver
         self.smtp_server: smtplib.SMTP = smtplib.SMTP(host=smtp_server, port=smtp_port)
@@ -22,7 +29,7 @@ class ChannelMail(NotificationChannel, ABC):
         except SMTPNotSupportedError:
             sys.exit(1)
 
-    def send(self):
+    def send(self, params: typing.List[str] = None) -> typing.Any:
         for cert in self.certificates.values():
             cert.until_expiry()
             if cert.should_warn():
@@ -32,9 +39,3 @@ class ChannelMail(NotificationChannel, ABC):
                 msg['From'] = self.sender
                 msg['To'] = self.receiver
                 self.smtp_server.send_message(msg)
-
-    def poll(self, param: str) -> int | str:
-        pass
-
-    def get_polls(self):
-        pass

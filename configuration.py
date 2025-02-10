@@ -15,7 +15,7 @@ class Configuration:
     }  # section: [list of options]
 
     DEFAULTS = {
-        'mode': ('host', str.__class__),
+        'poll-mode': ('host', str.__class__),
         'locations': (None, typing.List.__class__),
         'check-interval': ('24', int.__class__),
         'max-age': ('32', int.__class__),
@@ -31,7 +31,7 @@ class Configuration:
     }  # option: default value
 
     COMMENTS = {
-        'mode': """
+        'poll-mode': """
 # Determines what mode to use in general.
 # this option can be overridden per location in optional [units]
 #
@@ -42,7 +42,7 @@ class Configuration:
 # Comma separated list of locations
 # If the chosen mode is host, this should be an url. e.g. https://example.org
 # If the chosen mode is files, this should be a directory. e.g. /etc/letsencrypt/live/example.org
-# To specify a location using custom [general] settings, add 'section:' as a prefix to a custom name. e.g. section:example_org
+# To specify a location using custom [certificates] settings, add 'section:' as a prefix to a custom name. e.g. section:example_org
 # Default: https://example.org""",
         'check-interval': """
 # How often should the certificates be checked in hours.
@@ -97,18 +97,18 @@ class Configuration:
             self.config.add_section(sec)
             for opt in opts:
                 if opt in Configuration.COMMENTS.keys():
-                    self.config.set(sec, Configuration.COMMENTS[opt])
-                self.config.set(sec, opt, Configuration.DEFAULTS[opt])
-            self.config.set(sec, """
-# It is possible to add a custom section which overrides the options in [general].
+                    self.config.set(sec, Configuration.COMMENTS[opt].rstrip())
+                self.config.set(sec, opt, Configuration.DEFAULTS[opt][0])
+
+        self.config.set('certificates', """
+# It is possible to add a custom section which overrides the options in [certificates].
 # It needs to be added in locations. e.g. section:example_org
 # You need to specify the same options. e.g.:
 # 
 # [example_org]
 # mode = host
 # locations = https://example.org,https://jellyfin.example.org
-# check-interval = 64
-""")
+# check-interval = 64""")
 
         with open(self.config_file, 'w') as conf:
             self.config.write(conf)
@@ -119,6 +119,7 @@ class Configuration:
     ##
     def read_config(self):
         if not path_exists(self.config_file) or not path_isfile(self.config_file):
+            self.logger.warning(f'Config file not found at {self.config_file}, creating from defaults.')
             self.create_config()
 
         self.config.read(self.config_file)
@@ -134,7 +135,7 @@ class Configuration:
                 self.logger.warning(f"Section '{sec}' not found in {self.config_file}, adding default values.")
                 self.config.add_section(sec)
                 for opt in opts:
-                    self.config.set(sec, Configuration.DEFAULTS[opt])
+                    self.config.set(sec, Configuration.DEFAULTS[opt][0])
 
             for opt in opts:
                 self.config_values[opt] = self.__get_option(section=sec, option=opt, fallback=Configuration.DEFAULTS[opt][0], class_type=Configuration.DEFAULTS[opt][1])
@@ -147,7 +148,7 @@ class Configuration:
                     continue
                 self.logger.info(f"Section '{sec}' found.")
                 section = {}
-                for opt in Configuration.DEFAULTS.keys():
+                for opt in Configuration.SECTIONS['certificates']:
                     if Configuration.DEFAULTS[opt] is None:
                         section[opt] = self.__get_option(section=sec, option=opt, fallback=None, class_type=Configuration.DEFAULTS[opt][1])
                     else:
@@ -170,7 +171,9 @@ class Configuration:
             case bool.__class__:
                 value = self.config.getboolean(section=section, option=option, fallback=None)
             case typing.List.__class__:
-                value = self.config.get(section=section, option=option, fallback=None).split(',')
+                value = self.config.get(section=section, option=option, fallback=None)
+                if value is not None:
+                    value = value.split(',')
             case _:
                 value = None
 
