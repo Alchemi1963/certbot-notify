@@ -1,4 +1,5 @@
-# Certnotify - a programme which polls certificates and notifies you when it's getting old
+# Certnotify 
+## A programme which polls certificates and notifies you when it's getting old
 
 Certnotify can poll a certificate by it's file or by downloading it from the host, as specified in the config file.
 You can specify the `max-age` per certificate, as well as the `poll-mode` and the `message-template` by adding a new `[section]` in the config and specifying it in `locations`.
