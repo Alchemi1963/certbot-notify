@@ -17,17 +17,18 @@ You can specify the `max-age` per certificate, as well as the `poll-mode` and th
 6. (Optional) to install it in `/etc/cron.d/` run it with the `-i` option, to install it with the current configuration file, specify `-I` as well.
 
 ## Command line arguments:
-| option               | description                                       | default value             |
-|----------------------|---------------------------------------------------|---------------------------|
-| -c, --config         | set custom configuration file                     | ~/.config/certnotify.conf |
-| -p, --poll           | poll specific item(s). can be used multiple times |                           |
-| -P, --print-polls    | print possible items to poll for use with --poll  |                           |
-| -i, --install        | install cronjob into /etc/cron.d/                 |                           |
-| -I, --install-config | install cronjob with config file used in --config |                           |
-| -u, --uninstall      | uninstall cronjob                                 |                           |
-| -v, --verbose        | set log level to DEBUG                            |                           |
-| -l, --log-level      | define log level                                  | INFO                      |
-| --reset              | reset configuration file to defaults              |                           |
+| option               | description                                            | default value             |
+|----------------------|--------------------------------------------------------|---------------------------|
+| -c, --config         | set custom configuration file                          | ~/.config/certnotify.conf |
+| -p, --poll           | poll specific item(s). can be used multiple times      |                           |
+| -P, --print-polls    | print possible items to poll for use with --poll       |                           |
+| -i, --install        | install cronjob into /etc/cron.d/                      |                           |
+| -I, --install-config | install cronjob with config file used in --config      |                           |
+| -u, --uninstall      | uninstall cronjob                                      |                           |
+| -v, --verbose        | set log level to DEBUG                                 |                           |
+| -l, --log-level      | define log level                                       | INFO                      |
+| --reset              | reset configuration file to defaults                   |                           |
+| --cron               | run in cron mode, this outputs to /var/log/certnotify/ |                           |
 
 ## Contributing
 To contribute to this repo, follow the installation instructions for other systems up until step 2.
