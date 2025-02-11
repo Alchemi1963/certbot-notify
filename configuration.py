@@ -89,7 +89,7 @@ class Configuration:
     }
 
     def __init__(self, config_file: string, logger: logging.Logger):
-        self.config_file = config_file
+        self.config_file = config_file.replace('~', os.path.expanduser('~'))
         self.config = configparser.ConfigParser(allow_no_value=True)
         self.logger: logging.Logger = logger
         self.config_values = {}
