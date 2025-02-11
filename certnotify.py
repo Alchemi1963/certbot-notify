@@ -90,7 +90,7 @@ class Main:
             cron.write(f"""# certnotify cron job
 SHELL=/bin/bash
 PATH={os.path.join(os.path.dirname(os.path.realpath(__file__)), 'venv', 'bin')}
-{self.config.get('check-interval')} root python \"{os.path.realpath(__file__)}\" --cron --config \"{conf_file}\"
+{self.config.get('check-interval')} root python3 \"{os.path.realpath(__file__)}\" --cron --config \"{conf_file}\"
 """)
 
         sys.exit(0)
