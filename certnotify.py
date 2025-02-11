@@ -16,10 +16,11 @@ class Main:
 
         handler = logging.StreamHandler(stream=sys.stdout)
         if cron:
-            now = datetime.datetime.now()
-            handler = logging.FileHandler(filename=f'/var/log/certnotify/{now.strftime("%d-%m-%Y_%H-%M-%S")}.log')
             if not os.path.exists('/var/log/certnotify'):
                 os.mkdir('/var/log/certnotify')
+
+            now = datetime.datetime.now()
+            handler = logging.FileHandler(filename=f'/var/log/certnotify/{now.strftime("%d-%m-%Y_%H-%M-%S")}.log')
 
         logging.basicConfig(
             level=logging.getLevelNamesMapping()[level.upper()],
