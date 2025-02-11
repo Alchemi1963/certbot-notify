@@ -201,6 +201,9 @@ class Configuration:
             value = self.config.get(section=section, option=option, fallback=None)
             if value is not None:
                 value = value.split(',')
+                for v in value:
+                    i = value.index(v)
+                    value[i] = v.strip()
 
 
         if value is None and fallback is not None and fallback != '':
