@@ -91,6 +91,14 @@ PATH={os.path.join(os.path.dirname(os.path.realpath(__file__)), 'venv', 'bin')}
 {self.config.get('check-interval')} root python \"{os.path.realpath(__file__)}\" --cron --config \"{conf_file}\"
 """)
 
+        sys.exit(0)
+
+    def uninstall_cron(self):
+        self.test_root()
+        os.remove('/etc/cron.d/certnotify')
+
+        sys.exit(0)
+
     def test_root(self):
         if os.geteuid() != 0:
             self.logger.error('Running without root permissions, unable to complete task.')
@@ -114,7 +122,8 @@ parser.add_argument('-v', '--verbose', action='store_true', default=False, help=
 parser.add_argument('-P', '--print-polls', action='store_true', default=False, help='Print possible items to poll')
 parser.add_argument('-l', '--log-level', default='INFO', help='Define log level. Choose from DEBUG, INFO, WARN, ERROR, FATAL, CRITICAL')
 parser.add_argument('-i', '--install', action='store_true', help='Install script into /etc/cron.d using default arguments')
-parser.add_argument('-I', '--install-config', help='Install cron with specified config file', action='store_true')
+parser.add_argument('-I', '--install-config', action='store_true', help='Install cron with specified config file')
+parser.add_argument('-u', '--uninstall', action='store_true', help='Uninstall cron job')
 parser.add_argument('--cron', action='store_true', help='Run in cron mode')
 
 # TODO: make programme installer (bash .deb .wheel?)
@@ -123,13 +132,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.verbose:
-        args.log_level = 'DEBUG'
+        log_level = 'DEBUG'
+    else:
+        log_level = args.log_level
 
-    main = Main(config=args.config, level=args.log_level, cron=args.cron)
+    main = Main(config=args.config, level=log_level, cron=args.cron)
 
     if args.install:
         main.install_cron()
-        sys.exit(0)
+    elif args.uninstall:
+        main.uninstall_cron()
 
     main.setup_channel(args.poll or args.print_polls)
 
