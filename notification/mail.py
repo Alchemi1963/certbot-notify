@@ -51,7 +51,6 @@ class ChannelMail(NotificationChannel, ABC):
             if cert.data is None:
                 cert.load_cert_data()
 
-            cert.until_expiry()
             if cert.should_warn():
                 msg = EmailMessage()
                 msg.set_content(cert.get_message())
@@ -59,6 +58,7 @@ class ChannelMail(NotificationChannel, ABC):
                 msg['From'] = self.sender
                 msg['To'] = self.receiver
                 self.smtp_server.send_message(msg)
+                self.logger.info(f'Send mail to {self.receiver}')
 
     def __debuglog_command(self, command: typing.Tuple[int, bytes]):
         self.logger.debug(f'Code {str(command[0])} - {command[1].decode()}')

@@ -15,13 +15,13 @@ class Configuration:
     }  # section: [list of options]
 
     DEFAULTS = {
-        'check-interval': ('24', int),
+        'check-interval': ('0 0 * * *', str),
         'auto-load-certs': ('True', bool),
         'poll-mode': ('host', str),
         'locations': ('', list),
         'max-age': ('32', int),
         'cert-file': ('cert.pem', str),
-        'message-template': ('Certificate for {cert.host} is expiring in {cert.valid_days} days! {nline}It also certifies: {cert.alts}', str),
+        'message-template': ('Certificate of {cert.host} is expiring in {cert.valid_days} days! {nline}It also certifies: {cert.alts}', str),
         'mail-enable': ('True', bool),
         'sender': ('', str),
         'receiver': ('', str),
@@ -34,8 +34,9 @@ class Configuration:
 
     COMMENTS = {
         'check-interval': """
-# How often should the certificates be checked in hours.
-# Default: 24""",
+# Cron expression for the check interval.
+# min hour day month day-in-week.
+# Default: 40 6 * * * (Check every day at 6:40)""",
         'auto-load-certs': """
 # Should the programme automatically load the certificate data?
 # Useful for the script polling mode
@@ -117,8 +118,8 @@ class Configuration:
 # 
 # [example_org]
 # mode = host
-# locations = https://example.org,https://jellyfin.example.org
-# check-interval = 64""")
+# locations = https://example.org
+# max-age = 64""")
 
         with open(self.config_file, 'w') as conf:
             self.config.write(conf)
@@ -159,7 +160,7 @@ class Configuration:
                 self.logger.info(f"Section '{sec}' found.")
                 section = {}
                 for opt in Configuration.SECTIONS['certificates']:
-                    if Configuration.DEFAULTS[opt] is '':
+                    if Configuration.DEFAULTS[opt] == '':
                         section[opt] = self.__get_option(section=sec, option=opt, fallback=None, class_type=Configuration.DEFAULTS[opt][1])
                     else:
                         section[opt] = self.__get_option(section=sec, option=opt, fallback=self.config_values[opt], class_type=Configuration.DEFAULTS[opt][1])
@@ -195,7 +196,7 @@ class Configuration:
                 value = value.split(',')
 
 
-        if value is None and fallback is not None and fallback is not '':
+        if value is None and fallback is not None and fallback != '':
             if section in Configuration.SECTIONS.keys():
                 self.logger.info(f"Value for '{option}' in [{section}] not found, falling back to '{fallback}'.")
             value = fallback

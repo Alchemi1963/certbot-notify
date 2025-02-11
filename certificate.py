@@ -7,6 +7,7 @@ from cryptography import x509
 from urllib.parse import urlparse
 from datetime import datetime, UTC, timedelta
 from os.path import join as path_join
+from os.path import exists as path_exists
 
 import configuration
 
@@ -45,7 +46,7 @@ class Certificate:
         self.mode: str = config.get('poll-mode', config_location)
         self.max_age: int = config.get('max-age', config_location)
         self.msg_template: str = config.get('message-template', config_location)
-        self.logger.debug(location)
+        self.logger.debug(f'mode: {self.mode}, max-age: {self.max_age}, config_location: {config_location}')
         self.location: str = location
         self.config = config
         self.data = None
@@ -64,6 +65,7 @@ class Certificate:
     # Load certificate data from PEM format.
     ##
     def load_cert_data(self):
+        self.logger.debug(f'Loading data for {self.location}')
         if self.data is not None:
             return
 
@@ -85,6 +87,8 @@ class Certificate:
     # Returns content of specified cert file
     ##
     def get_cert_files(self):
+        if not path_exists(self.location):
+            self.logger.error(f'Certificate {self.location} does not exist.')
         with open(self.location, 'rt') as cfile:
             self.cert = cfile.read()
 
@@ -137,6 +141,7 @@ class Certificate:
         if self.expiry is None:
             self.until_expiry()
 
+        self.logger.debug(f"{self.location}")
         self.logger.debug(f"Max age: {self.max_age} days")
         self.logger.debug(f"Valid days: {self.expiry.days} days")
         return self.expiry.days <= self.max_age
