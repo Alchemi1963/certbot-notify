@@ -57,7 +57,8 @@ class Main:
 
     def process_certificates(self):
 
-        if self.config.get('locations') is None or len(self.config.get('locations')) == 0:
+        if ((self.config.get('locations')[0] == '' and len(self.config.get('locations')) == 1)
+                or len(self.config.get('locations')) == 0):
             self.logger.error('No locations configured')
             sys.exit(1)
 
@@ -113,7 +114,7 @@ PATH={os.path.join(os.path.dirname(os.path.realpath(__file__)), 'venv', 'bin')}
         elif isinstance(self.notifier, ChannelMail):
             self.notifier.send()
 
-parser = ArgumentParser('certbot-notify',
+parser = ArgumentParser('certnotify',
                                  description='Python program to check for certificates and notify about expirations.')
 parser.add_argument('-c', '--config', default="/etc/certnotify.conf", help='Set custom configuration file')
 parser.add_argument('-p', '--poll', action='append',
@@ -125,8 +126,6 @@ parser.add_argument('-i', '--install', action='store_true', help='Install script
 parser.add_argument('-I', '--install-config', action='store_true', help='Install cron with specified config file')
 parser.add_argument('-u', '--uninstall', action='store_true', help='Uninstall cron job')
 parser.add_argument('--cron', action='store_true', help='Run in cron mode')
-
-# TODO: make programme installer (bash .deb .wheel?)
 
 if __name__ == "__main__":
     args = parser.parse_args()

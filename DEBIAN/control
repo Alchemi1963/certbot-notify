@@ -3,4 +3,4 @@ Version: 1.0
 Architecture: all
 Maintainer: Melody Smit <linux@personaltardis.me>
 Description: Python programme to check configured certificates for exp
-Depends: python3 (>=3.10), python3-pip
+Depends: python3 (>=3.10), python3-pip, python3-venv
