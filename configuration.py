@@ -71,7 +71,7 @@ class Configuration:
 # Default: 'Certificate for {cert.host} is expiring in {cert.valid_days} days!\\nIt certifies: {cert.alts}'""",
         'mail-enable': """
 # Enable sending notification via mail?
-# Default: True""",
+# Default: False""",
         'sender': """
 # Email address to send the mail from.""",
         'receiver': """
