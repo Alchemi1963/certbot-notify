@@ -1,5 +1,5 @@
 Package: certnotify
-Version: 1.0.1
+Version: 1.0.2
 Architecture: all
 Maintainer: Melody Smit <linux@personaltardis.me>
 Description: Python programme to check configured certificates for exp

@@ -3,4 +3,5 @@ python3 -m venv /usr/lib/certnotify/venv
 source /usr/lib/certnotify/venv/bin/activate
 pip install --upgrade pip
 pip install cryptography
+python3 "/usr/lib/certnotify/certnotify.py" --reset
 exit

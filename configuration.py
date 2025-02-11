@@ -1,9 +1,11 @@
 import configparser
+import os.path
 import string
 import typing
 from os.path import exists as path_exists
 from os.path import isfile as path_isfile
-from os import remove
+from os.path import dirname
+from os import remove, mkdir
 import logging
 
 
@@ -120,6 +122,9 @@ class Configuration:
 # mode = host
 # locations = https://example.org
 # max-age = 64""")
+
+        if not path_exists(dirname(self.config_file)):
+            mkdir(dirname(self.config_file))
 
         with open(self.config_file, 'w') as conf:
             self.config.write(conf)

@@ -101,6 +101,9 @@ PATH={os.path.join(os.path.dirname(os.path.realpath(__file__)), 'venv', 'bin')}
 
         sys.exit(0)
 
+    def reset(self):
+        self.config.reset_config()
+
     def test_root(self):
         if os.geteuid() != 0:
             self.logger.error('Running without root permissions, unable to complete task.')
@@ -117,7 +120,7 @@ PATH={os.path.join(os.path.dirname(os.path.realpath(__file__)), 'venv', 'bin')}
 
 parser = ArgumentParser('certnotify',
                                  description='Python program to check for certificates and notify about expirations.')
-parser.add_argument('-c', '--config', default="/etc/certnotify.conf", help='Set custom configuration file')
+parser.add_argument('-c', '--config', default="~/.config/certnotify.conf", help='Set custom configuration file')
 parser.add_argument('-p', '--poll', action='append',
                     help='Specify item to poll, script returns in order of polling. This makes the script run once.')
 parser.add_argument('-v', '--verbose', action='store_true', default=False, help='Verbose output, equal to: --log-level DEBUG')
@@ -126,6 +129,7 @@ parser.add_argument('-l', '--log-level', default='INFO', help='Define log level.
 parser.add_argument('-i', '--install', action='store_true', help='Install script into /etc/cron.d using default arguments')
 parser.add_argument('-I', '--install-config', action='store_true', help='Install cron with specified config file')
 parser.add_argument('-u', '--uninstall', action='store_true', help='Uninstall cron job')
+parser.add_argument('--reset', action='store_true', help='Reset default configuration')
 parser.add_argument('--cron', action='store_true', help='Run in cron mode')
 
 if __name__ == "__main__":
@@ -142,6 +146,8 @@ if __name__ == "__main__":
         main.install_cron()
     elif args.uninstall:
         main.uninstall_cron()
+    elif args.reset:
+        main.reset()
 
     main.setup_channel(args.poll or args.print_polls)
 
