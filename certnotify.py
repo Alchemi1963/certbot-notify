@@ -103,6 +103,7 @@ PATH={os.path.join(os.path.dirname(os.path.realpath(__file__)), 'venv', 'bin')}
 
     def reset(self):
         self.config.reset_config()
+        sys.exit(0)
 
     def test_root(self):
         if os.geteuid() != 0:
