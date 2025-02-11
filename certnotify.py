@@ -85,7 +85,7 @@ class Main:
     def install_cron(self):
         self.test_root()
         cron_file = '/etc/cron.d/certnotify'
-        conf_file = os.path.realpath(self.config.config_file) if args.install_config else "/etc/certnotify.conf"
+        conf_file = os.path.realpath(self.config.config_file) if args.install_config else "~/.config/certnotify.conf"
         with open(cron_file, 'wt') as cron:
             cron.write(f"""# certnotify cron job
 SHELL=/bin/bash

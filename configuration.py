@@ -17,7 +17,7 @@ class Configuration:
     }  # section: [list of options]
 
     DEFAULTS = {
-        'check-interval': ('0 0 * * *', str),
+        'check-interval': ('40 6 * * *', str),
         'auto-load-certs': ('True', bool),
         'poll-mode': ('host', str),
         'locations': ('', list),
@@ -48,7 +48,7 @@ class Configuration:
 # this option can be overridden per location in optional [units]
 #
 # host: queries certificates online at specified locations to get the currently used certificate
-# file: queries certificates from specified directories
+# files: queries certificates from specified directories
 # Default: host""",
         'locations': """
 # Comma separated list of locations
@@ -121,7 +121,7 @@ class Configuration:
 # You need to specify the same options. e.g.:
 # 
 # [example_org]
-# mode = host
+# poll-mode = host
 # locations = https://example.org
 # max-age = 64""")
 
