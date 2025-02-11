@@ -1,0 +1,3 @@
+#!/bin/bash
+source /usr/lib/certnotify/venv/bin/activate
+python /usr/lib/certnotify/certnotify.py "$0"

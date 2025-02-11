@@ -22,7 +22,7 @@ class Configuration:
         'max-age': ('32', int),
         'cert-file': ('cert.pem', str),
         'message-template': ('Certificate of {cert.host} is expiring in {cert.valid_days} days! {nline}It also certifies: {cert.alts}', str),
-        'mail-enable': ('True', bool),
+        'mail-enable': ('False', bool),
         'sender': ('', str),
         'receiver': ('', str),
         'smtp-server': ('', str),
