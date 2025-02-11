@@ -100,12 +100,14 @@ class Configuration:
     def reset_config(self):
         if path_exists(self.config_file):
             remove(self.config_file)
+        self.config = configparser.ConfigParser(allow_no_value=True)
         self.create_config()
 
     ##
     # Create the config file from default values.
     ##
     def create_config(self):
+
         for sec, opts in Configuration.SECTIONS.items():
             self.config.add_section(sec)
             for opt in opts:
