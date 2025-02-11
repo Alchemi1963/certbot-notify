@@ -157,7 +157,7 @@ class Certificate:
                    .replace('{cert.valid_seconds}', str(int(self.expiry.total_seconds())))
                    .replace('{cert.valid}', str(self.validate()))
                    .replace('{cert.max-age}', str(self.max_age))
-                   .replace('{cert.alts}', f"{', '.join(self.get_hosts()[:-1])} & {self.get_hosts()[-1]}"))
+                   .replace('{cert.alts}', f"{', '.join(self.get_hosts()[:-1])} & {self.get_hosts()[-1]}" if len(self.get_hosts()) > 1 else self.get_hosts()[0]))
 
         self.logger.debug(message)
 

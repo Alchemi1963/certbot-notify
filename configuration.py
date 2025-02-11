@@ -68,7 +68,7 @@ class Configuration:
 # Message template.
 # Use {} for substitutions.
 # Valid substitutions: 'nline', 'cert.host', 'cert.valid_days', 'cert.valid_seconds', 'cert.valid', 'cert.max-age' & 'cert.alts'
-# Default: 'Certificate for {cert.host} is expiring in {cert.valid_days} days!\\nIt also certifies: {cert.alts}'""",
+# Default: 'Certificate for {cert.host} is expiring in {cert.valid_days} days!\\nIt certifies: {cert.alts}'""",
         'mail-enable': """
 # Enable sending notification via mail?
 # Default: True""",
