@@ -121,17 +121,36 @@ PATH={os.path.join(os.path.dirname(os.path.realpath(__file__)), 'venv', 'bin')}
 
 parser = ArgumentParser('certnotify',
                                  description='Python program to check for certificates and notify about expirations.')
-parser.add_argument('-c', '--config', default="~/.config/certnotify.conf", help='Set custom configuration file')
-parser.add_argument('-p', '--poll', action='append',
-                    help='Specify item to poll, script returns in order of polling. This makes the script run once.')
-parser.add_argument('-v', '--verbose', action='store_true', default=False, help='Verbose output, equal to: --log-level DEBUG')
-parser.add_argument('-P', '--print-polls', action='store_true', default=False, help='Print possible items to poll')
-parser.add_argument('-l', '--log-level', default='INFO', help='Define log level. Choose from DEBUG, INFO, WARN, ERROR, FATAL, CRITICAL')
-parser.add_argument('-i', '--install', action='store_true', help='Install script into /etc/cron.d using default arguments')
-parser.add_argument('-I', '--install-config', action='store_true', help='Install cron with specified config file')
-parser.add_argument('-u', '--uninstall', action='store_true', help='Uninstall cron job')
-parser.add_argument('--reset', action='store_true', help='Reset default configuration')
-parser.add_argument('--cron', action='store_true', help='Run in cron mode')
+parser.add_argument('-c', '--config',
+                    default="~/.config/certnotify.conf",
+                    help='Set custom configuration file')
+parser.add_argument('-p', '--poll',
+                    action='append',
+                    help='Poll specific item(s) can be used multiple times')
+parser.add_argument('-P', '--print-polls',
+                    action='store_true',
+                    help='Print possible items to poll for use with --poll')
+parser.add_argument('-i', '--install',
+                    action='store_true',
+                    help='Install cronjob into /etc/cron.d using default config location as root')
+parser.add_argument('-I', '--install-config',
+                    action='store_true',
+                    help='Install cron with config file specified in --config')
+parser.add_argument('-u', '--uninstall',
+                    action='store_true',
+                    help='Uninstall cron job')
+parser.add_argument('-v', '--verbose',
+                    action='store_true',
+                    help='Verbose output; equal to: --log-level DEBUG')
+parser.add_argument('-l', '--log-level',
+                    default='INFO',
+                    help='Define log level. Choose from DEBUG, INFO, WARN, ERROR, FATAL, CRITICAL')
+parser.add_argument('--reset',
+                    action='store_true',
+                    help='Reset configuration to defaults')
+parser.add_argument('--cron',
+                    action='store_true',
+                    help='Run in cron mode, this outputs to /var/log/certnotify/')
 
 if __name__ == "__main__":
     args = parser.parse_args()
